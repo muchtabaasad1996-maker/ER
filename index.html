@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Clinical ER">
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="manifest.json">
+<title>Clinical ER, Surgery, Medicine & Neuro Guide v6.0</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body {
+font-family: 'Inter', system-ui, -apple-system, sans-serif;
+background: #0f172a;
+color: #f8fafc;
+-webkit-tap-highlight-color: transparent;
+padding-top: env(safe-area-inset-top);
+padding-bottom: env(safe-area-inset-bottom);
+}
+.card { background: #1e293b; border: 1px solid #334155; border-radius: 14px; }
+.active-mob { color: #38bdf8; border-top: 3px solid #38bdf8; background: rgba(56,189,248,0.1); }
+.active-side { background: #0284c7; color: #ffffff; border-color: #38bdf8; }
+.no-sb::-webkit-scrollbar { display: none; }
+input, select { outline: none; }
+.renal-active {
+background: rgba(16, 185, 129, 0.18) !important;
+border: 1px solid #10b981 !important;
+color: #ffffff !important;
+}
+.acc-body { transition: all 0.2s ease-in-out; }
+</style>
+</head>
+<body class="min-h-screen flex flex-col md:flex-row pb-20 md:pb-0">
+<!-- ================= iPAD / TABLET SIDEBAR ================= -->
+<aside class="hidden md:flex md:flex-col md:w-72 lg:w-80 bg-slate-900 border-r border-slate-800 p-4 sticky top-0 h-screen shrink-0 justify-between select-none">
+<div class="space-y-4 overflow-y-auto no-sb">
+<div class="flex items-center gap-3 pb-3 border-b border-slate-800">
+<div class="w-11 h-11 rounded-2xl bg-sky-500/20 border border-sky-400/40 flex items-center justify-center text-2xl">⚕️</div>
+<div>
+<h1 class="font-extrabold text-base text-white leading-tight">Acute Care Pocket</h1>
+<p class="text-[11px] text-emerald-400 font-semibold">ER • Surgery • Medicine • Neuro v6.0</p>
+</div>
+</div>
+<!-- Persistent Weight Controller on iPad -->
+<div class="card p-3.5 space-y-2.5 bg-slate-800/70">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold text-slate-300">Patient Weight:</span>
+<span id="sideWBadge" class="text-base font-extrabold text-sky-400 bg-slate-900 px-2.5 py-0.5 rounded-lg border border-sky-500/40">70 kg</span>
+</div>
+<div class="flex items-center gap-1.5">
+<button onclick="setW(W-5)" class="w-9 h-9 rounded-xl bg-slate-700 hover:bg-slate-600 font-bold text-xs">-5</button>
+<input id="wInpSide" type="number" value="70" oninput="setW(this.value)" class="w-full text-center bg-slate-900 border border-slate-700 rounded-xl py-1.5 font-extrabold text-sky-400 text-sm">
+<button onclick="setW(W+5)" class="w-9 h-9 rounded-xl bg-slate-700 hover:bg-slate-600 font-bold text-xs">+5</button>
+</div>
+<input id="wRngSide" type="range" min="3" max="150" value="70" oninput="setW(this.value)" class="w-full accent-sky-400 h-2 bg-slate-700 rounded-lg cursor-pointer">
+<div class="grid grid-cols-4 gap-1 text-[10px] text-center font-bold text-slate-300 pt-1">
+<button onclick="setW(12)" class="bg-slate-900 py-1 rounded hover:text-sky-400">12kg</button>
+<button onclick="setW(25)" class="bg-slate-900 py-1 rounded hover:text-sky-400">25kg</button>
+<button onclick="setW(70)" class="bg-slate-900 py-1 rounded text-sky-400">70kg</button>
+<button onclick="setW(120)" class="bg-slate-900 py-1 rounded hover:text-sky-400">120kg</button>
+</div>
+</div>
+<!-- Quick CrCl Status on Sidebar -->
+<div class="card p-3 bg-slate-900/90 border-slate-800 flex justify-between items-center text-xs">
+<span class="text-slate-400 font-bold">Renal CrCl:</span>
+<span id="sideCrClBadge" class="font-extrabold text-emerald-400">86 mL/min</span>
+</div>
+<!-- Navigation -->
+<nav class="space-y-1.5 text-xs font-bold">
+<button onclick="tab('dosing')" id="s-dosing" class="w-full p-3 rounded-xl border flex items-center gap-3 text-left transition active-side">
+<span class="text-lg">💊</span><span>Emergency Medications</span>
+</button>
+<button onclick="tab('abx')" id="s-abx" class="w-full p-3 rounded-xl border border-slate-800 flex items-center gap-3 text-left text-slate-300 hover:bg-slate-800 transition">
+<span class="text-lg">🦠</span><span>Antimicrobials & Renal CrCl</span>
+</button>
+<button onclick="tab('protocols')" id="s-protocols" class="w-full p-3 rounded-xl border border-slate-800 flex items-center gap-3 text-left text-slate-300 hover:bg-slate-800 transition">
+<span class="text-lg">🚨</span><span>ER Protocols (Surg/Med/Neuro)</span>
+</button>
+<button onclick="tab('scales')" id="s-scales" class="w-full p-3 rounded-xl border border-slate-800 flex items-center gap-3 text-left text-slate-300 hover:bg-slate-800 transition">
+<span class="text-lg">🧠</span><span>Clinical Scales & Burns</span>
+</button>
+<button onclick="tab('pump')" id="s-pump" class="w-full p-3 rounded-xl border border-slate-800 flex items-center gap-3 text-left text-slate-300 hover:bg-slate-800 transition">
+<span class="text-lg">💉</span><span>ICU Infusion Pumps</span>
+</button>
+<div class="pt-2 border-t border-slate-800">
+<button onclick="tab('all')" id="s-all" class="w-full p-3 rounded-xl border border-sky-500/40 bg-sky-500/10 flex items-center gap-3 text-left text-sky-300 hover:bg-sky-500/20 transition">
+<span class="text-lg">🖥️</span><span>iPad Split Dashboard View</span>
+</button>
+</div>
+</nav>
+</div>
+<div class="text-[10px] text-slate-500 text-center border-t border-slate-800 pt-2">
+iOS PWA Ready • v6.0
+</div>
+</aside>
+<!-- ================= MOBILE TOP HEADER ================= -->
+<header class="md:hidden sticky top-0 z-30 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 py-2.5 flex justify-between items-center">
+<div>
+<h1 class="font-extrabold text-sm text-white">⚕️ Acute Care & ER Pocket</h1>
+<p class="text-[10px] text-emerald-400">Neuro • Surgery • Medicine • ABX v6.0</p>
+</div>
+<div class="flex gap-1.5">
+<div class="bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1 text-center">
+<span class="text-[9px] text-slate-400 block">CrCl</span>
+<span id="hdrCrCl" class="text-xs font-extrabold text-emerald-400">86</span>
+</div>
+<div class="bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1 text-center">
+<span class="text-[9px] text-slate-400 block">Weight</span>
+<span id="hdrW" class="text-xs font-extrabold text-sky-400">70 kg</span>
+</div>
+</div>
+</header>
+<!-- ================= MAIN CONTENT ================= -->
+<main class="flex-1 p-3.5 md:p-6 max-w-7xl mx-auto w-full space-y-6 overflow-y-auto">
+<!-- iOS Add to Home Screen Banner Helper -->
+<div id="iosInstallBanner" class="hidden card p-3.5 bg-sky-500/10 border-sky-500/40 flex items-center justify-between gap-3 text-xs">
+<div>
+<b class="text-sky-300 block mb-0.5">📱 Install as iOS App:</b>
+<span class="text-slate-300">Tap the Safari share button <b class="text-white">[ ↗ ]</b> and select <b class="text-white">"Add to Home Screen"</b> for full-screen offline use.</span>
+</div>
+<button onclick="document.getElementById('iosInstallBanner').style.display='none'" class="text-slate-400 font-bold px-2 py-1 bg-slate-800 rounded-lg shrink-0">✕</button>
+</div>
+<!-- Mobile Weight Controller -->
+<div class="md:hidden card p-3">
+<div class="flex justify-between items-center mb-2">
+<span class="text-xs font-bold text-slate-200">Patient Weight (kg):</span>
+<div class="flex items-center gap-1.5">
+<button onclick="setW(W-5)" class="w-8 h-8 rounded-lg bg-slate-700 font-bold text-xs">-5</button>
+<input id="wInpMob" type="number" value="70" oninput="setW(this.value)" class="w-16 text-center bg-slate-900 border border-sky-500 rounded-lg py-1 font-extrabold text-sky-400">
+<button onclick="setW(W+5)" class="w-8 h-8 rounded-lg bg-slate-700 font-bold text-xs">+5</button>
+</div>
+</div>
+<input id="wRngMob" type="range" min="3" max="150" value="70" oninput="setW(this.value)" class="w-full accent-sky-400 h-2 bg-slate-700 rounded-lg">
+<div class="flex justify-between text-[10px] text-slate-400 mt-1 font-bold">
+<span onclick="setW(10)" class="bg-slate-800 px-2 py-0.5 rounded">Child 10kg</span>
+<span onclick="setW(25)" class="bg-slate-800 px-2 py-0.5 rounded">Child 25kg</span>
+<span onclick="setW(70)" class="bg-slate-800 px-2 py-0.5 rounded text-sky-400">Adult 70kg</span>
+<span onclick="setW(120)" class="bg-slate-800 px-2 py-0.5 rounded">120kg+</span>
+</div>
+</div>
+<!-- ================= SECTION 1: ALL MEDICATIONS ================= -->
+<section id="tab-dosing" class="space-y-3">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+<div>
+<h2 class="text-base md:text-lg font-extrabold text-white flex items-center gap-2">
+<span>💊 Emergency & Acute Care Medications</span>
+<span class="text-[11px] bg-slate-800 text-sky-400 px-2.5 py-0.5 rounded-full">Tap to Expand ▼</span>
+</h2>
+<p class="text-[11px] text-slate-400">Tap any medication row to expand weight-based dosing & clinical pearls</p>
+</div>
+<div class="flex gap-2 items-center">
+<input id="dSearch" type="text" oninput="renderDrugs()" placeholder="🔍 Search drug (Mannitol, Keppra, RSI, Lasix)..."
+class="w-full md:w-72 bg-slate-900 border border-slate-700 focus:border-sky-400 rounded-xl py-2 px-3 text-xs text-white">
+<button onclick="toggleGroup('drug')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-3 py-2 rounded-xl text-[11px] font-bold shrink-0">
+Expand / Collapse All
+</button>
+</div>
+</div>
+<div class="flex gap-1.5 overflow-x-auto no-sb text-xs font-bold pb-1" id="catBar"></div>
+<div id="drugsList" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5 items-start"></div>
+</section>
+<!-- ================= SECTION 2: ANTIMICROBIALS & RENAL DOSING ================= -->
+<section id="tab-abx" class="hidden space-y-4">
+<div class="card p-4 bg-gradient-to-r from-slate-800/90 to-slate-900 border-emerald-500/40 space-y-3">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-700/80 pb-2.5">
+<div>
+<h3 class="text-sm font-extrabold text-emerald-400">💧 Cockcroft-Gault CrCl & Renal Dose Adjuster</h3>
+<p class="text-[11px] text-slate-400">Enter Age & Serum Creatinine to auto-highlight the patient's renal dosing tier</p>
+</div>
+<div class="bg-slate-950 border border-slate-700 rounded-xl px-4 py-1.5 text-center shrink-0">
+<span class="text-[10px] text-slate-400 block">Creatinine Clearance</span>
+<span id="crclResult" class="text-lg font-extrabold text-emerald-400">86 mL/min</span>
+<span id="crclStage" class="text-[10px] text-emerald-300 block font-bold">Normal Renal Function (>50)</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2.5 text-xs">
+<div>
+<label class="text-slate-300 font-bold block mb-1">Age (years):</label>
+<input id="rAge" type="number" value="50" min="1" max="110" oninput="calcCrCl()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-center font-extrabold text-white">
+</div>
+<div>
+<label class="text-slate-300 font-bold block mb-1">S. Creatinine (mg/dL):</label>
+<input id="rScr" type="number" step="0.1" value="1.0" min="0.2" max="20" oninput="calcCrCl()" class="w-full bg-slate-900 border border-sky-500/60 rounded-xl p-2 text-center font-extrabold text-sky-400">
+</div>
+<div>
+<label class="text-slate-300 font-bold block mb-1">Sex:</label>
+<select id="rSex" onchange="calcCrCl()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 font-bold text-white">
+<option value="1">Male (×1.0)</option>
+<option value="0.85">Female (×0.85)</option>
+</select>
+</div>
+</div>
+</div>
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+<div class="flex gap-1.5 overflow-x-auto no-sb text-xs font-bold pb-1" id="abxCatBar"></div>
+<div class="flex gap-2 items-center shrink-0">
+<input id="abxSearch" type="text" oninput="renderAbx()" placeholder="🔍 Search ABX / Regimen..."
+class="w-full md:w-64 bg-slate-900 border border-slate-700 focus:border-emerald-400 rounded-xl py-2 px-3 text-xs text-white">
+<button onclick="toggleGroup('abx')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-3 py-2 rounded-xl text-[11px] font-bold shrink-0">
+Expand / Collapse
+</button>
+</div>
+</div>
+<div id="empiricSection" class="space-y-2.5">
+<h3 class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">🦠 Empiric Antimicrobial Protocols (Tap to Expand ▼)</h3>
+<div id="abxList" class="grid grid-cols-1 lg:grid-cols-2 gap-2.5 items-start"></div>
+</div>
+<div id="renalSection" class="space-y-2.5">
+<h3 class="text-xs font-extrabold uppercase tracking-wider text-sky-400">📋 Renal Dose Adjustment Guide (Green Box = Active CrCl Tier)</h3>
+<div id="renalGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5 items-start"></div>
+<div class="card p-3 bg-slate-900/70 border-slate-800 text-[11px] text-slate-300">
+💡 <b>No Renal Dose Adjustment Required:</b>
+<span class="text-emerald-400 font-bold">Ceftriaxone, Metronidazole, Moxifloxacin, Clindamycin, Linezolid, Azithromycin, Doxycycline, Nafcillin.</span>
+</div>
+</div>
+</section>
+<!-- ================= SECTION 3: EMERGENCY PROTOCOLS ================= -->
+<section id="tab-protocols" class="hidden space-y-3 text-xs">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+<div>
+<h2 class="text-base md:text-lg font-extrabold text-white">🚨 Emergency Protocols (Neuro, Surgery & Internal Medicine)</h2>
+<p class="text-[11px] text-slate-400">Tap any protocol card to expand step-by-step management</p>
+</div>
+<div class="flex gap-2 items-center">
+<input id="pSearch" type="text" oninput="renderProtos()" placeholder="🔍 Search protocol (DKA, GI Bleed, ATLS, ICP, STEMI)..."
+class="w-full md:w-72 bg-slate-900 border border-slate-700 rounded-xl py-2 px-3 text-white">
+<button onclick="toggleGroup('proto')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-3 py-2 rounded-xl text-[11px] font-bold shrink-0">
+Expand / Collapse
+</button>
+</div>
+</div>
+<div class="flex gap-1.5 overflow-x-auto no-sb text-xs font-bold pb-1" id="protoCatBar"></div>
+<div id="protoList" class="grid grid-cols-1 lg:grid-cols-2 gap-2.5 items-start"></div>
+</section>
+<!-- ================= SECTION 4: CLINICAL SCALES & BURNS ================= -->
+<section id="tab-scales" class="hidden space-y-3 text-xs">
+<h2 class="text-base md:text-lg font-extrabold text-white">🧠 Clinical Scales, Hematoma Volume & Burn Calculator</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+<!-- 1. GCS -->
+<div class="card p-4 space-y-3 flex flex-col justify-between">
+<div class="space-y-3">
+<div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
+<div>
+<span class="text-slate-400 text-[11px]">Glasgow Coma Scale</span>
+<div id="gcsOut" class="text-xl font-extrabold text-emerald-400">15/15 (E4 V5 M6)</div>
+</div>
+<button onclick="copyGCS()" class="bg-sky-500/20 border border-sky-400 text-sky-300 px-3 py-1.5 rounded-xl font-bold">Copy 📋</button>
+</div>
+<div class="space-y-2">
+<select id="gcsE" onchange="calcGCS()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white font-semibold">
+<option value="4">E4: Spontaneous</option>
+<option value="3">E3: To Verbal Command</option>
+<option value="2">E2: To Pain</option>
+<option value="1">E1: No Response</option>
+</select>
+<select id="gcsV" onchange="calcGCS()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white font-semibold">
+<option value="5">V5: Oriented</option>
+<option value="4">V4: Confused</option>
+<option value="3">V3: Inappropriate Words</option>
+<option value="2">V2: Incomprehensible Sounds</option>
+<option value="1">V1: None / Intubated (T)</option>
+</select>
+<select id="gcsM" onchange="calcGCS()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white font-semibold">
+<option value="6">M6: Obeys Commands</option>
+<option value="5">M5: Localizes Pain</option>
+<option value="4">M4: Normal Withdrawal</option>
+<option value="3">M3: Decorticate Flexion</option>
+<option value="2">M2: Decerebrate Extension</option>
+<option value="1">M1: No Response</option>
+</select>
+</div>
+</div>
+<div id="gcsNote" class="bg-slate-900 p-2.5 rounded-xl text-center text-emerald-400 font-bold">Mild Brain Injury (13–15)</div>
+</div>
+<!-- 2. ABC/2 -->
+<div class="card p-4 space-y-3 flex flex-col justify-between">
+<div class="space-y-2.5">
+<h3 class="font-extrabold text-sm text-sky-400 border-b border-slate-800 pb-2">📐 ABC/2 Hematoma Volume</h3>
+<div><label class="text-slate-300 block mb-1">A: Largest diameter on CT (cm)</label><input id="abA" type="number" step="0.1" value="4.0" oninput="calcABC()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 font-bold text-white"></div>
+<div><label class="text-slate-300 block mb-1">B: Diameter 90° to A (cm)</label><input id="abB" type="number" step="0.1" value="3.0" oninput="calcABC()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 font-bold text-white"></div>
+<div><label class="text-slate-300 block mb-1">C: Slices × Slice thickness (cm)</label><input id="abC" type="number" step="0.1" value="3.0" oninput="calcABC()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 font-bold text-white"></div>
+</div>
+<div id="abcOut" class="bg-slate-900 border border-slate-800 p-3 rounded-xl text-center font-extrabold text-base text-sky-400">Volume: 18.0 mL (cm³)</div>
+</div>
+<!-- 3. ICH Score -->
+<div class="card p-4 space-y-2.5 flex flex-col justify-between">
+<div class="space-y-1.5">
+<h3 class="font-extrabold text-sm text-amber-400 border-b border-slate-800 pb-2">📊 ICH Score (Mortality)</h3>
+<select id="icG" onchange="calcICH()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-white"><option value="0">GCS 13–15 (0 pt)</option><option value="1">GCS 5–12 (+1 pt)</option><option value="2">GCS 3–4 (+2 pts)</option></select>
+<select id="icV" onchange="calcICH()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-white"><option value="0">ICH Volume < 30 cm³ (0)</option><option value="1">ICH Volume ≥ 30 cm³ (+1)</option></select>
+<select id="icI" onchange="calcICH()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-white"><option value="0">No IVH (0)</option><option value="1">IVH Present (+1)</option></select>
+<select id="icF" onchange="calcICH()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-white"><option value="0">Supratentorial (0)</option><option value="1">Infratentorial (+1)</option></select>
+<select id="icA" onchange="calcICH()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-white"><option value="0">Age < 80 yrs (0)</option><option value="1">Age ≥ 80 yrs (+1)</option></select>
+</div>
+<div id="ichOut" class="bg-slate-900 border border-slate-800 p-3 rounded-xl text-center font-extrabold text-sm text-amber-400">ICH Score: 0/6 (30-Day Mort: 0%)</div>
+</div>
+<!-- 4. Surgical Parkland Burn Calculator -->
+<div class="card p-4 space-y-3 flex flex-col justify-between">
+<div class="space-y-2.5">
+<h3 class="font-extrabold text-sm text-rose-400 border-b border-slate-800 pb-2">🔥 Parkland Burn Fluid (Surgery)</h3>
+<p class="text-[11px] text-slate-400">4 mL × Weight (kg) × %TBSA of Lactated Ringer's</p>
+<div>
+<label class="text-slate-300 block mb-1">Burn %TBSA (1–100%):</label>
+<input id="burnTbsa" type="number" value="20" min="1" max="100" oninput="calcBurn()" class="w-full bg-slate-900 border border-rose-500/50 rounded-xl p-2.5 font-extrabold text-rose-400 text-sm">
+</div>
+</div>
+<div id="burnOut" class="bg-slate-900 border border-slate-800 p-3 rounded-xl space-y-1 text-center">
+<div class="text-sm font-extrabold text-white">Total 24h: 5600 mL LR</div>
+<div class="text-xs text-sky-400 font-bold">1st 8h: 2800 mL (350 mL/hr)</div>
+<div class="text-[11px] text-slate-400">Next 16h: 2800 mL (175 mL/hr)</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= SECTION 5: ICU PUMP ================= -->
+<section id="tab-pump" class="hidden space-y-3 text-xs">
+<h2 class="text-base md:text-lg font-extrabold text-white">💉 ICU Vasopressor & Sedation Infusion Pump</h2>
+<div class="card p-4 md:p-5 max-w-2xl">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+<div class="space-y-3">
+<select id="pPre" onchange="setPump()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-bold">
+<option value="4,50,0.1,1">Norepinephrine (4mg / 50mL) [mcg/kg/min]</option>
+<option value="8,50,0.1,1">Norepinephrine Double (8mg / 50mL)</option>
+<option value="4,50,0.05,1">Epinephrine (4mg / 50mL) [mcg/kg/min]</option>
+<option value="200,50,5,1">Dopamine (200mg / 50mL) [mcg/kg/min]</option>
+<option value="250,50,5,1">Dobutamine (250mg / 50mL) [mcg/kg/min]</option>
+<option value="500,50,20,1">Propofol 1% (500mg / 50mL) [mcg/kg/min]</option>
+<option value="50,50,0.05,2">Midazolam (50mg / 50mL) [mg/kg/hr]</option>
+<option value="0.5,50,1,3">Fentanyl (500mcg / 50mL) [mcg/kg/hr]</option>
+</select>
+<div class="grid grid-cols-3 gap-2">
+<div><label class="text-[10px] text-slate-400 block mb-1">Drug (mg)</label><input id="pMg" type="number" value="4" oninput="calcPump()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 font-bold text-center"></div>
+<div><label class="text-[10px] text-slate-400 block mb-1">Volume (mL)</label><input id="pMl" type="number" value="50" oninput="calcPump()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 font-bold text-center"></div>
+<div><label class="text-[10px] text-sky-400 block mb-1">Target Dose</label><input id="pDs" type="number" step="0.05" value="0.1" oninput="calcPump()" class="w-full bg-slate-900 border border-sky-500 rounded-xl p-2.5 font-bold text-sky-400 text-center"></div>
+</div>
+</div>
+<div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl text-center">
+<span class="text-slate-400 text-xs">Pump Infusion Rate</span>
+<div id="pOut" class="text-4xl font-extrabold text-emerald-400 my-2">5.3 mL/hr</div>
+<span id="pNote" class="text-[11px] text-slate-400">Calculated for Weight: 70 kg</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- ================= MOBILE BOTTOM NAV ================= -->
+<nav class="md:hidden fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur border-t border-slate-800 grid grid-cols-5 z-40 text-[10px] font-bold pb-[env(safe-area-inset-bottom)]">
+<button onclick="tab('dosing')" id="n-dosing" class="py-2 flex flex-col items-center active-mob"><span class="text-base">💊</span><span>Meds</span></button>
+<button onclick="tab('abx')" id="n-abx" class="py-2 flex flex-col items-center text-slate-400"><span class="text-base">🦠</span><span>ABX/Renal</span></button>
+<button onclick="tab('protocols')" id="n-protocols" class="py-2 flex flex-col items-center text-slate-400"><span class="text-base">🚨</span><span>Protocols</span></button>
+<button onclick="tab('scales')" id="n-scales" class="py-2 flex flex-col items-center text-slate-400"><span class="text-base">🧠</span><span>Scales</span></button>
+<button onclick="tab('pump')" id="n-pump" class="py-2 flex flex-col items-center text-slate-400"><span class="text-base">💉</span><span>ICU Pump</span></button>
+</nav>
+<script>
+// Show iOS install prompt if in Safari and not standalone
+if (navigator.userAgent.match(/(iPhone|iPod|iPad)/i) && !window.navigator.standalone && !window.matchMedia('(display-mode: standalone)').matches) {
+document.getElementById('iosInstallBanner').classList.remove('hidden');
+}
+// Register Service Worker for offline PWA support
+if ('serviceWorker' in navigator) {
+window.addEventListener('load', () => {
+navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed: ', err));
+});
+}
+let W = 70, CrCl = 86, curCat = 'all', curAbxCat = 'all', curProtoCat = 'all', pMode = 1;
+const openSet = new Set();
+const cats = [
+['all','All Meds'],['icp','🧠 ICP & Neuro'],['aed','⚡ Seizures / AEDs'],['rsi','💤 RSI & Sedation'],['cardio','❤️ Cardio & Resus'],['abx','🦠 Individual ABX'],['misc','🧪 Electrolytes / GI / Antidotes']
+];
+const abxCats = [
+['all','All (Empiric + Renal)'],
+['cns','🧠 CNS & Neurosurgery'],
+['proph','🔪 Surgical Prophylaxis'],
+['ed','🏥 ED & Sepsis'],
+['peds','👶 Pediatric CNS'],
+['renal','💧 Renal Dosing Only']
+];
+const protoCats = [
+['all','All Protocols (15)'],
+['neuro','🧠 Neurosurgery & Neuro'],
+['surg','🔪 General Surgery & Trauma'],
+['med','🏥 Internal Medicine & ICU']
+];
+const drugs = [
+{id:"d1",n:"Mannitol 20%",c:"icp",t:"Osmotherapy / ICP",f:w=>⁠• <b>Bolus (0.5–1 g/kg):</b> <b class="text-sky-400">${Math.round(w*2.5)} – ${Math.round(w*5)} mL IV</b> (${(w*0.5).toFixed(1)}–${w} g) over 15–20 min<br>• <b>Maintenance (0.25 g/kg):</b> <b>${Math.round(w*1.25)} mL IV q6h</b>⁠,i:"20% = 20g/100mL (1g = 5mL). Contraindicated in hypotension (SBP < 90), anuria, or Serum Osm > 320 mOsm/kg."},
+{id:"d2",n:"Hypertonic Saline 3% (NaCl 3%)",c:"icp",t:"ICP / Hyponatremia",f:w=>⁠• <b>Raised ICP Bolus (2–5 mL/kg):</b> <b class="text-sky-400">${Math.round(w*2)} – ${Math.round(w*5)} mL IV</b> over 15–20 min<br>• <b>Seizures from Severe Hyponatremia:</b> <b>100 – 150 mL IV</b> over 10 min⁠,i:"Preferred over Mannitol in hypotensive or hypovolemic trauma patients. Monitor serum Na closely."},
+{id:"d3",n:"Dexamethasone (Decadron)",c:"icp",t:"Vasogenic Edema / CNS",f:w=>⁠• <b>Brain Tumor / Abscess Edema:</b> <b class="text-sky-400">10 mg IV Stat</b>, then <b>4 mg IV/PO q6h</b><br>• <b>Bacterial Meningitis (0.15 mg/kg):</b> <b class="text-sky-400">${(w*0.15).toFixed(1)} mg IV q6h</b> (Max 10mg q6h) 15–20 min before 1st ABX⁠,i:"Contraindicated in Traumatic Brain Injury (CRASH trial showed increased mortality)."},
+{id:"d4",n:"Nimodipine & Tranexamic Acid (TXA)",c:"icp",t:"SAH / TBI Bleeding",f:w=>⁠• <b>Nimodipine (SAH Vasospasm):</b> <b class="text-sky-400">60 mg PO/NGT q4h</b> for 21 days (or 30mg q2h if hypotensive)<br>• <b>Tranexamic Acid (TXA):</b> Load <b class="text-sky-400">1 g IV</b> over 10 min (Peds: ${Math.min(w*15,1000)} mg), then <b>1 g IV</b> over 8 hrs⁠,i:"Give TXA within 3 hours of head injury (Mild-Moderate TBI) or major trauma hemorrhage."},
+{id:"d5",n:"Acetazolamide (Diamox)",c:"icp",t:"IIH / CSF Leak",f:w=>⁠• <b>Adults (IIH / CSF Leak):</b> <b class="text-sky-400">250 – 500 mg PO q8–12h</b> (Max 2–4 g/day)<br>• <b>Pediatrics (25 mg/kg/day):</b> <b>${Math.round(w*8)} mg PO q8h</b>⁠,i:"Carbonic anhydrase inhibitor; decreases CSF production by choroid plexus."},
+{id:"d6",n:"Midazolam & Diazepam",c:"aed",t:"1st-Line Status Epilepticus",f:w=>⁠• <b>Midazolam:</b> <b class="text-sky-400">${Math.min((w*0.15).toFixed(1),10)} mg IV</b> or <b class="text-sky-400">${w>=40?10:5} mg IM</b><br>• <b>Diazepam:</b> <b class="text-sky-400">${Math.min((w*0.2).toFixed(1),10)} mg IV slowly</b> (≤5 mg/min; Peds rectal: ${Math.min((w*0.5).toFixed(1),20)} mg PR)⁠,i:"IM Midazolam (10 mg) is equally rapid and effective when IV access is delayed."},
+{id:"d7",n:"Levetiracetam (Keppra)",c:"aed",t:"2nd-Line Status / Prophylaxis",f:w=>⁠• <b>Status Epilepticus Load (60 mg/kg):</b> <b class="text-sky-400">${Math.min(w*60,4500)} mg IV</b> (Max 4500 mg) over 15 min<br>• <b>Maintenance / TBI Prophylaxis:</b> <b>500 – 1500 mg IV/PO q12h</b> (Peds: ${Math.round(w*20)} mg q12h)⁠,i:"Minimal drug interactions and no cardiac/hemodynamic toxicity. Adjust maintenance in renal impairment."},
+{id:"d8",n:"Phenytoin (Epanutin)",c:"aed",t:"2nd-Line Status / AED",f:w=>⁠• <b>Status Load (20 mg/kg):</b> <b class="text-sky-400">${Math.round(w*20)} mg IV</b> in Normal Saline over at least <b>${Math.ceil(w*20/50)} min</b><br>• <b>Maintenance:</b> <b>100 mg IV/PO q8h</b>⁠,i:"Dilute ONLY in 0.9% Normal Saline (precipitates in Dextrose). Max rate 50 mg/min (25 mg/min in elderly) with ECG/BP monitoring."},
+{id:"d9",n:"Sodium Valproate & Phenobarbital",c:"aed",t:"2nd/3rd-Line Status",f:w=>⁠• <b>Valproate Load (40 mg/kg):</b> <b class="text-sky-400">${Math.min(w*40,3000)} mg IV</b> over 10 min (Maint: ${Math.round(w*7.5)} mg q12h)<br>• <b>Phenobarbital Load (20 mg/kg):</b> <b class="text-sky-400">${Math.round(w*20)} mg IV</b> (≤60 mg/min)⁠,i:"Avoid Valproate in liver disease, pregnancy, thrombocytopenia, or mitochondrial disorders."},
+{id:"d10",n:"Etomidate & Ketamine (RSI Induction)",c:"rsi",t:"Hemodynamically Stable RSI",f:w=>⁠• <b>Etomidate (0.3 mg/kg):</b> <b class="text-sky-400">${(w*0.3).toFixed(1)} mg IV Push</b><br>• <b>Ketamine Induction (1.5–2 mg/kg):</b> <b class="text-sky-400">${Math.round(w*1.5)} – ${Math.round(w*2)} mg IV</b><br>• <b>Ketamine Analgesia (0.3 mg/kg):</b> <b>${Math.round(w*0.3)} mg IV</b>⁠,i:"Preferred induction agents in trauma, TBI with hypotension, and septic/hemorrhagic shock."},
+{id:"d11",n:"Propofol 1% (Diprivan)",c:"rsi",t:"RSI / ICP / Refractory SE",f:w=>⁠• <b>RSI Induction (1.5–2 mg/kg):</b> <b class="text-sky-400">${Math.round(w*1.5)} mg (${(w*0.15).toFixed(1)} mL) IV</b><br>• <b>ICU Sedation Infusion:</b> <b>10 – 50 mcg/kg/min</b>⁠,i:"Potently reduces ICP and stops refractory seizures, but causes significant vasodilation and hypotension."},
+{id:"d12",n:"Rocuronium & Succinylcholine",c:"rsi",t:"RSI Neuromuscular Blockade",f:w=>⁠• <b>Rocuronium (1–1.2 mg/kg):</b> <b class="text-sky-400">${Math.round(w)} – ${Math.round(w*1.2)} mg IV</b><br>• <b>Succinylcholine (1.5 mg/kg):</b> <b class="text-sky-400">${Math.round(w*1.5)} mg IV Push</b>⁠,i:"Succinylcholine is CONTRAINDICATED in hyperkalemia, crush injuries, burns, or >48h after stroke/spinal cord injury."},
+{id:"d13",n:"Fentanyl, Morphine & Paracetamol IV",c:"rsi",t:"Analgesia & Antipyretic",f:w=>⁠• <b>Fentanyl (1–2 mcg/kg):</b> <b class="text-sky-400">${w} – ${w*2} mcg IV</b><br>• <b>Morphine (0.1 mg/kg):</b> <b class="text-sky-400">${Math.min((w*0.1).toFixed(1),10)} mg IV</b><br>• <b>Paracetamol IV:</b> <b class="text-sky-400">${w>=50?'1 g (100 mL)':Math.round(w*15)+' mg'} IV q6h</b>⁠,i:"Aggressive normothermia (Paracetamol) prevents secondary brain injury."},
+{id:"d14",n:"Labetalol, Nicardipine & Hydralazine",c:"cardio",t:"Acute BP Control (ICH/Stroke)",f:()=>⁠• <b>Labetalol:</b> <b class="text-sky-400">10 – 20 mg IV</b> over 2 min (may double q10min up to 80mg; Max 300mg) or <b>0.5–2 mg/min</b><br>• <b>Nicardipine:</b> Start <b>5 mg/hr IV</b>, titrate by 2.5 mg/hr q5–15min (Max 15 mg/hr)<br>• <b>Hydralazine:</b> <b>5 – 10 mg IV</b> q20min⁠,i:"First-line agents for rapid blood pressure lowering in ICH, ischemic stroke (pre-tPA), and hypertensive emergencies."},
+{id:"d15",n:"Epinephrine (Adrenaline)",c:"cardio",t:"Cardiac Arrest / Anaphylaxis",f:w=>⁠• <b>Cardiac Arrest (1:10,000):</b> <b class="text-sky-400">${w>=50?'1 mg IV/IO':(w*0.01).toFixed(2)+' mg IV'}</b> q3–5min<br>• <b>Anaphylaxis (1:1,000 IM):</b> <b class="text-sky-400">${w>=50?'0.5 mg IM':(w*0.01).toFixed(2)+' mg IM'}</b> into anterolateral thigh⁠,i:"Shock infusion: 0.05 – 0.5 mcg/kg/min via central line."},
+{id:"d16",n:"Atropine, Amiodarone & Adenosine",c:"cardio",t:"Arrhythmias / ACLS",f:w=>⁠• <b>Atropine (Bradycardia):</b> <b class="text-sky-400">${w>=40?'1 mg':(w*0.02).toFixed(2)+' mg'} IV</b> q3–5min (Max 3 mg)<br>• <b>Amiodarone (VF/pVT):</b> <b class="text-sky-400">300 mg IV Push</b>, then 150 mg (Stable VT: 150mg over 10min)<br>• <b>Adenosine (SVT):</b> <b class="text-sky-400">6 mg rapid IV push</b>, then <b>12 mg</b>⁠,i:"Atropine is critical in neurogenic shock bradycardia."},
+{id:"d17",n:"Furosemide (Lasix) & Nitroglycerin",c:"cardio",t:"Pulmonary Edema / Heart Failure",f:w=>⁠• <b>Furosemide (Lasix):</b> <b class="text-sky-400">${w>=50?'40 – 80 mg':Math.round(w)+' mg'} IV</b><br>• <b>Nitroglycerin (Acute Pulmonary Edema / ACS):</b> <b>0.4 mg SL</b> q5min ×3, or IV infusion <b>10 – 200 mcg/min</b>⁠,i:"Avoid Nitroglycerin if SBP < 90 mmHg, right ventricular infarction, or PDE-5 inhibitor use."},
+{id:"d18",n:"Vancomycin, Meropenem & Cefepime",c:"abx",t:"Broad-Spectrum & CNS ABX",f:w=>⁠• <b>Vancomycin:</b> Load <b class="text-sky-400">${Math.round(w*25)} mg IV</b> (25mg/kg), Maint: <b>${Math.round(w*15)}–${Math.round(w*20)} mg q8–12h</b><br>• <b>Meropenem:</b> CNS <b>2 g IV q8h</b> | Sepsis <b>1 g IV q8h</b><br>• <b>Cefepime:</b> <b>2 g IV q8h</b>⁠,i:"See 'ABX/Renal' tab for complete empiric tables and CrCl renal dose adjustments."},
+{id:"d19",n:"Ceftriaxone, Pip-Tazo & Metronidazole",c:"abx",t:"Core ED & Surgical ABX",f:()=>⁠• <b>Ceftriaxone:</b> CNS <b>2 g IV q12h</b> | Systemic/Surgical <b>1–2 g IV q24h</b><br>• <b>Piperacillin-Tazobactam (Tazocin):</b> <b>4.5 g IV q6h</b> (or 3.375g q6h)<br>• <b>Metronidazole (Flagyl):</b> <b>500 mg IV q8h</b>⁠,i:"Pip-Tazo covers anaerobes automatically; no need to add Metronidazole to Pip-Tazo."},
+{id:"d20",n:"Pantoprazole, Octreotide & Ondansetron",c:"misc",t:"GI Bleed / Antiemetic",f:()=>⁠• <b>Pantoprazole / Omeprazole (UGIB):</b> <b class="text-sky-400">80 mg IV Bolus</b>, then <b>8 mg/hr IV infusion</b> for 72h<br>• <b>Octreotide (Variceal Bleed):</b> <b class="text-sky-400">50 mcg IV Bolus</b>, then <b>50 mcg/hr IV</b><br>• <b>Ondansetron (Zofran):</b> <b>4 – 8 mg IV</b>⁠,i:"Add Ceftriaxone 1g IV q24h as prophylaxis in cirrhotic upper GI hemorrhage."},
+{id:"d21",n:"Desmopressin (DDAVP) & Hydrocortisone",c:"misc",t:"Endocrine / Pituitary ER",f:()=>⁠• <b>Desmopressin (Central DI):</b> <b class="text-sky-400">1 – 2 mcg IV/SC q12–24h</b><br>• <b>Hydrocortisone (Adrenal Crisis / Pituitary Apoplexy):</b> <b class="text-sky-400">100 – 200 mg IV Stat</b>, then <b>50 – 100 mg IV q6h</b>⁠,i:"Always administer Hydrocortisone BEFORE thyroid hormone in panhypopituitarism / myxedema coma."},
+{id:"d22",n:"Reversal Antidotes (Vit K, Naloxone, Flumazenil)",c:"misc",t:"Toxicology & Anticoagulation",f:()=>⁠• <b>Warfarin Reversal (ICH/Major Bleed):</b> <b class="text-sky-400">Vitamin K 10 mg IV slow</b> + <b>4-factor PCC (25–50 U/kg)</b> or FFP (10–15 mL/kg)<br>• <b>Naloxone (Opioids):</b> <b class="text-sky-400">0.4 – 2 mg IV</b> q2–3min<br>• <b>Flumazenil (Benzos):</b> <b>0.2 mg IV</b> over 30s⁠,i:"Avoid Flumazenil in patients with history of seizures or tricyclic antidepressant overdose."}
+];
+const abxProtocols = [
+{
+id: "abx1", cat: "cns", badge: "CNS Meningitis (18–50y)", badgeColor: "bg-rose-500/20 text-rose-300",
+title: "1. Community-Acquired Bacterial Meningitis (Age 18–50, Immunocompetent)",
+pathogens: "S. pneumoniae, N. meningitidis",
+firstLine: w => ⁠• <b class="text-sky-400">Vancomycin:</b> 15–20 mg/kg IV q8–12h <span class="text-emerald-400 font-bold">[${Math.round(w*15)}–${Math.round(w*20)} mg]</span> (target trough 15–20 mcg/mL)<br>• <b>+ Ceftriaxone:</b> <b class="text-sky-400">2 g IV q12h</b> (or Cefotaxime 2 g q4–6h)⁠,
+allergy: w => ⁠• <b>Vancomycin</b> (${Math.round(w*15)}–${Math.round(w*20)} mg q8–12h) + <b>Moxifloxacin 400 mg IV q24h</b> (or Aztreonam 2 g q6–8h)⁠,
+pearls: w => ⁠Give <b>Dexamethasone 0.15 mg/kg IV q6h</b> [${(w*0.15).toFixed(1)} mg] for 2–4 days, 15–20 min before or with the first antibiotic dose if pneumococcal meningitis is suspected.⁠
+},
+{
+id: "abx2", cat: "cns", badge: "CNS High-Risk / Listeria", badgeColor: "bg-rose-500/20 text-rose-300",
+title: "2. Bacterial Meningitis (Age > 50, Immunocompromised, Alcoholism, or Pregnancy)",
+pathogens: "S. pneumoniae, N. meningitidis, Listeria monocytogenes, Aerobic Gram-negative bacilli",
+firstLine: w => ⁠• <b class="text-sky-400">Vancomycin:</b> 15–20 mg/kg IV q8–12h <span class="text-emerald-400 font-bold">[${Math.round(w*15)}–${Math.round(w*20)} mg]</span><br>• <b>+ Ceftriaxone 2 g IV q12h</b><br>• <b>+ Ampicillin 2 g IV q4h</b> (for Listeria)⁠,
+allergy: w => ⁠• <b>Vancomycin</b> + <b>Moxifloxacin 400 mg IV q24h</b> + <b>TMP-SMX 5 mg/kg (TMP) IV q6–8h</b> <span class="text-emerald-400 font-bold">[${Math.round(w*5)} mg TMP]</span> (for Listeria)⁠,
+pearls: () => ⁠Cephalosporins have NO activity against Listeria. Always add Ampicillin (or TMP-SMX) in patients >50 yrs, pregnant, or immunocompromised.⁠
+},
+{
+id: "abx3", cat: "cns", badge: "Post-Neurosurgery / Shunt", badgeColor: "bg-purple-500/20 text-purple-300",
+title: "3. Healthcare-Associated Ventriculitis / Meningitis (Post-Op, VP Shunt, EVD, Penetrating Trauma)",
+pathogens: "S. aureus, CoNS (S. epidermidis), P. aeruginosa, Acinetobacter, Enterobacterales",
+firstLine: w => ⁠• <b class="text-sky-400">Vancomycin:</b> 15–20 mg/kg IV q8–12h <span class="text-emerald-400 font-bold">[${Math.round(w*15)}–${Math.round(w*20)} mg]</span><br>• <b>+ Cefepime 2 g IV q8h</b> (or Ceftazidime 2 g q8h, or <b class="text-sky-400">Meropenem 2 g IV q8h</b>)⁠,
+allergy: w => ⁠• <b>Vancomycin</b> (${Math.round(w*15)}–${Math.round(w*20)} mg q8–12h) + <b>Aztreonam 2 g IV q6–8h</b> (or Ciprofloxacin 400 mg IV q8h)⁠,
+pearls: () => ⁠Meropenem (2 g q8h) is preferred if ESBL organisms or Acinetobacter are prevalent. Strongly consider infected hardware removal / EVD externalization.⁠
+},
+{
+id: "abx4", cat: "cns", badge: "Skull Base / CSF Leak", badgeColor: "bg-amber-500/20 text-amber-300",
+title: "4. Basilar Skull Fracture / CSF Leak Meningitis",
+pathogens: "S. pneumoniae, H. influenzae, Group A Streptococcus",
+firstLine: w => ⁠• <b class="text-sky-400">Vancomycin:</b> 15–20 mg/kg IV q8–12h <span class="text-emerald-400 font-bold">[${Math.round(w*15)}–${Math.round(w*20)} mg]</span> + <b class="text-sky-400">Ceftriaxone 2 g IV q12h</b>⁠,
+allergy: w => ⁠• <b>Vancomycin</b> (${Math.round(w*15)}–${Math.round(w*20)} mg q8–12h) + <b>Moxifloxacin 400 mg IV q24h</b>⁠,
+pearls: () => ⁠Routine prophylactic antibiotics in non-infected basilar skull fractures with CSF leak are not recommended; treat immediately if meningitis signs develop.⁠
+},
+{
+id: "abx5", cat: "cns", badge: "Brain Abscess / Empyema", badgeColor: "bg-rose-500/20 text-rose-300",
+title: "5. Brain Abscess / Subdural Empyema (Otogenic, Odontogenic, or Sinus Source)",
+pathogens: "Streptococci (S. anginosus group), Anaerobes (Bacteroides, Prevotella), Enterobacterales",
+firstLine: w => ⁠• <b class="text-sky-400">Ceftriaxone 2 g IV q12h</b> + <b class="text-sky-400">Metronidazole 500 mg IV q6–8h</b><br>• <i>Add <b>Vancomycin (${Math.round(w*15)}–${Math.round(w*20)} mg q8–12h)</b> if hematogenous spread or S. aureus suspected</i>⁠,
+allergy: () => ⁠• <b>Meropenem 2 g IV q8h</b> (if non-anaphylactic) OR <b>Vancomycin + Metronidazole 500 mg q8h + Ciprofloxacin 400 mg IV q8–12h</b>⁠,
+pearls: () => ⁠If Post-Neurosurgical or Post-Traumatic brain abscess: use Vancomycin + Cefepime 2g q8h (or Meropenem 2g q8h) to cover S. aureus and Pseudomonas.⁠
+},
+{
+id: "abx6", cat: "cns", badge: "Spinal Epidural Abscess", badgeColor: "bg-purple-500/20 text-purple-300",
+title: "6. Spinal Epidural Abscess / Vertebral Osteomyelitis",
+pathogens: "S. aureus (MSSA/MRSA), Streptococci, Gram-negative bacilli (post-GU or IVDU)",
+firstLine: w => ⁠• <b class="text-sky-400">Vancomycin:</b> 15–20 mg/kg IV q8–12h <span class="text-emerald-400 font-bold">[${Math.round(w*15)}–${Math.round(w*20)} mg]</span><br>• <b>+ Ceftriaxone 2 g IV q12h</b> (or <b>Cefepime 2 g IV q8h</b> if Pseudomonas risk)⁠,
+allergy: w => ⁠• <b>Vancomycin</b> (${Math.round(w*15)}–${Math.round(w*20)} mg q8–12h) + <b>Ciprofloxacin 400 mg IV q8–12h</b> (or Aztreonam 2 g q8h)⁠,
+pearls: () => ⁠Obtain blood cultures and biopsy/aspiration prior to antibiotics UNLESS patient is septic or has acute/progressive neurological deficits requiring emergent decompression.⁠
+},
+{
+id: "abx7", cat: "cns", badge: "Viral Encephalitis", badgeColor: "bg-sky-500/20 text-sky-300",
+title: "7. Viral Encephalitis (Suspected HSV / VZV)",
+pathogens: "HSV-1, HSV-2, VZV",
+firstLine: w => ⁠• <b class="text-sky-400">Acyclovir:</b> 10 mg/kg IV q8h <span class="text-emerald-400 font-bold">[${Math.round(w*10)} mg IV q8h]</span> (dosed on IBW; ensure adequate IV hydration)⁠,
+allergy: w => ⁠• <b>Foscarnet:</b> 60 mg/kg IV q8h <span class="text-emerald-400 font-bold">[${Math.round(w*60)} mg IV q8h]</span> (for Acyclovir-resistant strains)⁠,
+pearls: () => ⁠Infuse Acyclovir over 1 hour with aggressive IV crystalloid hydration to prevent crystal-induced nephrotoxicity.⁠
+},
+{
+id: "abx8", cat: "proph", badge: "Pre-Op Craniotomy/Spine", badgeColor: "bg-emerald-500/20 text-emerald-300",
+title: "8. Perioperative Prophylaxis: Clean Craniotomy, Spinal Surgery, or CSF Shunt",
+pathogens: "Staphylococcus aureus, Coagulase-negative Staphylococci",
+firstLine: w => ⁠• <b class="text-sky-400">Cefazolin:</b> <b class="text-emerald-400">${w>=120?'3 g IV (Weight ≥ 120 kg)':'2 g IV'}</b> within 60 min prior to skin incision⁠,
+allergy: w => ⁠• <b>Vancomycin 15 mg/kg IV</b> [${Math.min(Math.round(w*15),2000)} mg, Max 2g] (start within 120 min) OR <b>Clindamycin 900 mg IV</b>⁠,
+pearls: () => ⁠Intraoperative Redosing Interval: Cefazolin every 4 hours | Clindamycin every 6 hours.⁠
+},
+{
+id: "abx9", cat: "proph", badge: "Transsphenoidal / Skull Base", badgeColor: "bg-emerald-500/20 text-emerald-300",
+title: "9. Perioperative Prophylaxis: Transsphenoidal / Transoral / Skull Base Procedures",
+pathogens: "Sinus/pharyngeal mucosa flora, Streptococci, Staphylococci, Anaerobes",
+firstLine: w => ⁠• <b class="text-sky-400">Cefazolin ${w>=120?'3 g':'2 g'} IV</b> + <b class="text-sky-400">Metronidazole 500 mg IV</b> (Alt: <b>Ampicillin-Sulbactam 3 g IV</b>)⁠,
+allergy: w => ⁠• <b>Clindamycin 900 mg IV</b> + <b>Gentamicin 5 mg/kg IV</b> [${Math.round(w*5)} mg] (or Aztreonam 2 g IV)⁠,
+pearls: () => ⁠Intraoperative Redosing Interval: Ampicillin-Sulbactam every 2 hours | Cefazolin every 4 hours.⁠
+},
+{
+id: "abx10", cat: "ed", badge: "Sepsis / Septic Shock", badgeColor: "bg-rose-500/20 text-rose-300",
+title: "10. Sepsis / Septic Shock (Unknown Source)",
+pathogens: "MRSA, P. aeruginosa, Enterobacterales, Anaerobes",
+firstLine: w => ⁠• <b class="text-sky-400">Vancomycin:</b> 25–30 mg/kg Load <span class="text-emerald-400 font-bold">[${Math.round(w*25)}–${Math.round(w*30)} mg]</span>, then 15–20 mg/kg q8–12h<br>• <b>+ Piperacillin-Tazobactam 4.5 g IV q6h</b> (or Cefepime 2 g q8h, or Meropenem 1–2 g q8h)⁠,
+allergy: w => ⁠• <b>Vancomycin + Aztreonam 2 g q8h + Metronidazole 500 mg q8h</b> (+ Gentamicin ${Math.round(w*5)}–${Math.round(w*7)} mg if septic shock)⁠,
+pearls: () => ⁠Administer broad-spectrum antimicrobials within 1 hour of recognition of septic shock after drawing 2 sets of blood cultures.⁠
+},
+{
+id: "abx11", cat: "ed", badge: "CAP Pneumonia", badgeColor: "bg-sky-500/20 text-sky-300",
+title: "11. Community-Acquired Pneumonia (CAP) – Inpatient (Non-ICU)",
+pathogens: "S. pneumoniae, H. influenzae, Atypicals (Mycoplasma, Legionella)",
+firstLine: () => ⁠• <b class="text-sky-400">Ceftriaxone 1–2 g IV q24h</b> (or Ampicillin-Sulbactam 3 g q6h) + <b>Azithromycin 500 mg IV/PO q24h</b> (or Doxycycline 100 mg BID)⁠,
+allergy: () => ⁠• <b>Levofloxacin 750 mg IV/PO q24h</b> (or Moxifloxacin 400 mg IV/PO q24h)⁠,
+pearls: () => ⁠For Severe ICU CAP: Add Vancomycin or Linezolid if MRSA risk; use Pip-Tazo/Cefepime if Pseudomonas risk.⁠
+},
+{
+id: "abx12", cat: "ed", badge: "HAP / VAP Pneumonia", badgeColor: "bg-purple-500/20 text-purple-300",
+title: "12. Hospital-Acquired / Ventilator-Associated Pneumonia (HAP / VAP)",
+pathogens: "MRSA, P. aeruginosa, Klebsiella, Acinetobacter",
+firstLine: w => ⁠• <b class="text-sky-400">Vancomycin</b> (${Math.round(w*15)}–${Math.round(w*20)} mg q8–12h) or <b>Linezolid 600 mg IV q12h</b><br>• <b>+ Piperacillin-Tazobactam 4.5 g q6h</b> (or Cefepime 2 g q8h, or Meropenem 1 g q8h)⁠,
+allergy: () => ⁠• <b>Vancomycin (or Linezolid) + Aztreonam 2 g q8h + Levofloxacin 750 mg q24h</b>⁠,
+pearls: () => ⁠Linezolid avoids the additive nephrotoxicity of Vancomycin + Piperacillin-Tazobactam.⁠
+},
+{
+id: "abx13", cat: "ed", badge: "Intra-Abdominal (cIAI)", badgeColor: "bg-amber-500/20 text-amber-300",
+title: "13. Complicated Intra-Abdominal Infection (Cholecystitis, Perforation, Abscess)",
+pathogens: "Enterobacterales (E. coli, Klebsiella), Streptococci, Anaerobes (B. fragilis)",
+firstLine: () => ⁠• <b class="text-sky-400">Piperacillin-Tazobactam 3.375–4.5 g IV q6h</b> OR <b>Ceftriaxone 2 g q24h (or Cefepime 2 g q8h) + Metronidazole 500 mg q8h</b>⁠,
+allergy: () => ⁠• <b>Ciprofloxacin 400 mg IV q12h</b> (or Levofloxacin 750 mg q24h) + <b>Metronidazole 500 mg IV q8h</b>⁠,
+pearls: () => ⁠Ensure timely surgical source control (appendectomy, cholecystectomy, laparotomy, or percutaneous drainage).⁠
+},
+{
+id: "abx14", cat: "ed", badge: "Complicated UTI", badgeColor: "bg-teal-500/20 text-teal-300",
+title: "14. Complicated UTI / Pyelonephritis (Inpatient)",
+pathogens: "E. coli, Klebsiella, Proteus, Pseudomonas, Enterococci",
+firstLine: () => ⁠• <b class="text-sky-400">Ceftriaxone 1 g IV q24h</b> (or Cefepime 1–2 g q8–12h, or Pip-Tazo 3.375 g q6h)⁠,
+allergy: w => ⁠• <b>Ciprofloxacin 400 mg IV q12h</b> (or <b>Gentamicin 5–7 mg/kg IV q24h</b> [${Math.round(w*5)}–${Math.round(w*7)} mg])⁠,
+pearls: () => ⁠Rule out urinary tract obstruction via ultrasound/CT; infected hydronephrosis requires urgent decompression.⁠
+},
+{
+id: "abx15", cat: "ed", badge: "Necrotizing Fasciitis (NSTI)", badgeColor: "bg-rose-500/20 text-rose-300",
+title: "15. Necrotizing Soft Tissue Infection (NSTI / Fournier's Gangrene)",
+pathogens: "Polymicrobial, Group A Streptococcus, MRSA, Clostridium, Anaerobes",
+firstLine: w => ⁠• <b class="text-sky-400">Vancomycin</b> (${Math.round(w*15)}–${Math.round(w*20)} mg q8–12h) + <b>Pip-Tazo 4.5 g q6h</b> (or Meropenem 1–2 g q8h) + <b>Clindamycin 900 mg IV q8h</b>⁠,
+allergy: w => ⁠• <b>Vancomycin</b> (${Math.round(w*15)}–${Math.round(w*20)} mg) + <b>Aztreonam 2 g q8h</b> + <b>Clindamycin 900 mg q8h</b>⁠,
+pearls: () => ⁠Clindamycin (or Linezolid) suppresses bacterial exotoxin production. Emergent surgical debridement is mandatory.⁠
+},
+{
+id: "abx16", cat: "peds", badge: "Pediatric CNS (>1 Month)", badgeColor: "bg-amber-500/20 text-amber-300",
+title: "16. Rapid Pediatric CNS Empiric Dosing Reference (Infants & Children > 1 Month)",
+pathogens: "S. pneumoniae, N. meningitidis, H. influenzae, Shunt Pathogens",
+firstLine: w => ⁠• <b>Vancomycin (15 mg/kg q6h):</b> <b class="text-sky-400">${Math.min(Math.round(w*15),1000)} mg IV q6h</b> (Max 4 g/day)<br> • <b>Ceftriaxone (50 mg/kg q12h):</b> <b class="text-sky-400">${Math.min(Math.round(w*50),2000)} mg IV q12h</b> (Max 4 g/day)<br> • <b>Cefotaxime (75 mg/kg q6h):</b> <b class="text-sky-400">${Math.min(Math.round(w*75),3000)} mg IV q6h</b> (Max 12 g/day)<br> • <b>Cefepime [Shunt/Post-Op] (50 mg/kg q8h):</b> <b class="text-sky-400">${Math.min(Math.round(w*50),2000)} mg IV q8h</b> (Max 6 g/day)<br> • <b>Meropenem [Shunt/Post-Op] (40 mg/kg q8h):</b> <b class="text-sky-400">${Math.min(Math.round(w*40),2000)} mg IV q8h</b> (Max 6 g/day)⁠,
+allergy: w => ⁠• <b>Adjunctive Dexamethasone (0.15 mg/kg q6h):</b> <b class="text-amber-300">${(w*0.15).toFixed(1)} mg IV q6h</b> for 2–4 days⁠,
+pearls: () => ⁠Administer Dexamethasone before or with the first antibiotic dose to reduce sensorineural hearing loss.⁠
+}
+];
+const renalDrugs = [
+{
+id: "ren1", name: "Meropenem (CNS / Meningitis 2g Regimen)", ind: "Meningitis, Ventriculitis, Brain Abscess",
+tiers: [
+{ label: "CrCl > 50", match: c => c > 50, dose: "2 g IV q8h" },
+{ label: "CrCl 26 – 50", match: c => c >= 26 && c <= 50, dose: "2 g IV q12h" },
+{ label: "CrCl 10 – 25", match: c => c >= 10 && c < 26, dose: "1 g IV q12h" },
+{ label: "CrCl < 10 / HD", match: c => c < 10, dose: "1 g IV q24h (dose after HD)" }
+]
+},
+{
+id: "ren2", name: "Meropenem (Systemic / Sepsis 1g Regimen)", ind: "Sepsis, HAP/VAP, Intra-Abdominal",
+tiers: [
+{ label: "CrCl > 50", match: c => c > 50, dose: "1 g IV q8h" },
+{ label: "CrCl 26 – 50", match: c => c >= 26 && c <= 50, dose: "1 g IV q12h" },
+{ label: "CrCl 10 – 25", match: c => c >= 10 && c < 26, dose: "500 mg IV q12h" },
+{ label: "CrCl < 10 / HD", match: c => c < 10, dose: "500 mg IV q24h (dose after HD)" }
+]
+},
+{
+id: "ren3", name: "Cefepime (CNS / Pseudomonas Regimen)", ind: "Post-Neurosurgical Ventriculitis, Sepsis",
+tiers: [
+{ label: "CrCl > 60", match: c => c > 60, dose: "2 g IV q8h" },
+{ label: "CrCl 30 – 60", match: c => c >= 30 && c <= 60, dose: "2 g IV q12h" },
+{ label: "CrCl 11 – 29", match: c => c >= 11 && c < 30, dose: "2 g IV q24h" },
+{ label: "CrCl ≤ 10 / HD", match: c => c <= 10, dose: "1 g IV q24h (High neurotoxicity/NCSE risk!)" }
+]
+},
+{
+id: "ren4", name: "Vancomycin IV (CNS & Systemic)", ind: "Give full 25 mg/kg Load regardless of CrCl",
+tiers: [
+{ label: "CrCl > 50", match: c => c > 50, dose: w => ⁠15–20 mg/kg (${Math.round(w*15)}–${Math.round(w*20)} mg) q8–12h⁠ },
+{ label: "CrCl 20 – 50", match: c => c >= 20 && c <= 50, dose: w => ⁠15 mg/kg (${Math.round(w*15)} mg) q24h (guide by trough)⁠ },
+{ label: "CrCl < 20 / HD", match: c => c < 20, dose: w => ⁠Load 20 mg/kg, then ${Math.round(w*10)} mg q48–72h / post-HD⁠ }
+]
+},
+{
+id: "ren5", name: "Piperacillin-Tazobactam (Tazocin)", ind: "Sepsis, Nosocomial Pneumonia, Acute Abdomen",
+tiers: [
+{ label: "CrCl > 40", match: c => c > 40, dose: "4.5 g IV q6h (or 3.375 g q6h)" },
+{ label: "CrCl 20 – 40", match: c => c >= 20 && c <= 40, dose: "3.375 g IV q6h (or 2.25 g q6h)" },
+{ label: "CrCl < 20 / HD", match: c => c < 20, dose: "2.25 g IV q8h (q12h on HD)" }
+]
+},
+{
+id: "ren6", name: "Acyclovir IV & Ampicillin (CNS)", ind: "HSV Encephalitis & Listeria Meningitis",
+tiers: [
+{ label: "CrCl > 50", match: c => c > 50, dose: w => ⁠Acyclovir: ${Math.round(w*10)}mg q8h | Ampicillin: 2g q4h⁠ },
+{ label: "CrCl 25 – 50", match: c => c >= 25 && c <= 50, dose: w => ⁠Acyclovir: ${Math.round(w*10)}mg q12h | Ampicillin: 2g q6–8h⁠ },
+{ label: "CrCl 10 – 24", match: c => c >= 10 && c < 25, dose: w => ⁠Acyclovir: ${Math.round(w*10)}mg q24h | Ampicillin: 2g q12h⁠ },
+{ label: "CrCl < 10 / HD", match: c => c < 10, dose: w => ⁠Acyclovir: ${Math.round(w*5)}mg q24h | Ampicillin: 2g q12–24h⁠ }
+]
+}
+];
+const protos = [
+{
+id: "p1", cat: "neuro", badge: "Neurocritical Care", badgeColor: "bg-rose-500/20 text-rose-300",
+t: "🚨 1. Raised Intracranial Pressure (ICP) & Herniation Tiers",
+b: ⁠• <b>Targets:</b> ICP &lt; 22 mmHg | CPP 60–70 mmHg | SpO2 &gt; 94% | Normothermia | Normoglycemia.<br> • <b>Tier 0 (Baseline):</b> Elevate head of bed 30°, midline neck alignment, loosen cervical collar ties, adequate analgesia/sedation.<br> • <b>Tier 1 (Osmotherapy & Drainage):</b><br> &nbsp;&nbsp;– <b>Mannitol 20%:</b> 0.5–1 g/kg (2.5–5 mL/kg) IV bolus over 15 min (avoid if SBP &lt; 90 or S.Osm &gt; 320).<br> &nbsp;&nbsp;– <b>Hypertonic Saline 3%:</b> 2–5 mL/kg IV over 15 min (preferred in hypotension; target Na 145–155).<br> &nbsp;&nbsp;– <b>CSF Drainage:</b> via EVD if in situ.<br> • <b>Tier 2/3 (Refractory / Impending Herniation):</b> Temporary hyperventilation (PaCO2 30–35 mmHg), neuromuscular paralysis, decompressive craniectomy, or barbiturate coma.⁠
+},
+{
+id: "p2", cat: "neuro", badge: "Neurosurgery / Trauma", badgeColor: "bg-amber-500/20 text-amber-300",
+t: "🪖 2. Traumatic Brain Injury (TBI) & BTF Surgical Evacuation Thresholds",
+b: ⁠• <b>Medical Resuscitation:</b> Prevent secondary insult! Keep SBP ≥ 110 mmHg, SpO2 &gt; 94%, give <b>TXA 1g IV</b> within 3h + 7-day seizure prophylaxis (Keppra/Phenytoin).<br> • <b>Epidural Hematoma (EDH):</b> Evacuate if Volume &gt; 30 cm³ (regardless of GCS), OR thickness &gt; 15 mm, OR midline shift (MLS) &gt; 5 mm.<br> • <b>Acute Subdural Hematoma (ASDH):</b> Evacuate if thickness &gt; 10 mm OR MLS &gt; 5 mm on CT; OR if GCS drops ≥ 2 points / asymmetric pupils / ICP &gt; 20.<br> • <b>Traumatic Parenchymal Contusion / ICH:</b> Evacuate if Volume &gt; 50 cm³, OR Volume &gt; 20 cm³ in frontal/temporal lobe with MLS ≥ 5 mm and cisternal compression in patient with GCS 6–8.<br> • <b>Posterior Fossa / Cerebellar Lesion:</b> Evacuate if diameter &gt; 3 cm, fourth ventricle compression/hydrocephalus, or brainstem compression.⁠
+},
+{
+id: "p3", cat: "neuro", badge: "Neurology ER", badgeColor: "bg-sky-500/20 text-sky-300",
+t: "⚡ 3. Status Epilepticus Timed Management Protocol",
+b: ⁠• <b>0–5 min (Stabilization):</b> Airway, O2, IV access, fingerstick glucose (if &lt;60 mg/dL: give Thiamine 100mg IV + 50mL D50W).<br> • <b>5–10 min (1st-Line Benzodiazepine):</b> <b>Midazolam 10 mg IM/IV</b> OR <b>Diazepam 10 mg IV</b> slowly (may repeat once after 5 min).<br> • <b>10–30 min (2nd-Line IV Loading):</b><br> &nbsp;&nbsp;– <b>Levetiracetam (Keppra):</b> 60 mg/kg IV (max 4500 mg) over 15 min, OR<br> &nbsp;&nbsp;– <b>Phenytoin:</b> 20 mg/kg IV in Normal Saline (≤50 mg/min), OR<br> &nbsp;&nbsp;– <b>Sodium Valproate:</b> 40 mg/kg IV (max 3000 mg) over 10 min.<br> • <b>&gt;30 min (Refractory Status):</b> RSI intubation + continuous infusion of <b>Propofol</b> (20–50 mcg/kg/min) or <b>Midazolam</b> (0.05–2 mg/kg/hr) with EEG monitoring.⁠
+},
+{
+id: "p4", cat: "neuro", badge: "Stroke / ICH / SAH", badgeColor: "bg-purple-500/20 text-purple-300",
+t: "🧠 4. Acute Ischemic Stroke (tPA), Spontaneous ICH & Aneurysmal SAH",
+b: ⁠• <b>Acute Ischemic Stroke (AIS):</b> Non-contrast CT to exclude bleed. If eligible for thrombolysis (&lt;4.5h): lower BP &lt; 185/110 mmHg, give <b>Alteplase (tPA) 0.9 mg/kg</b> (Max 90mg: 10% bolus over 1min, 90% over 60min). Permissive hypertension (&lt;220/120) if no tPA.<br> • <b>Spontaneous ICH:</b> Smoothly lower SBP to target <b>140 mmHg</b> using Labetalol/Nicardipine. Reverse anticoagulants emergently (Vit K 10mg IV + PCC/FFP).<br> • <b>Aneurysmal SAH:</b> Target SBP &lt; 160 mmHg, start <b>Nimodipine 60 mg PO/NGT q4h</b> for 21 days, maintain euvolemia, urgent CTA/DSA for coiling/clipping.⁠
+},
+{
+id: "p5", cat: "neuro", badge: "Spine Trauma", badgeColor: "bg-amber-500/20 text-amber-300",
+t: "🦴 5. Acute Spinal Cord Injury (SCI) & Neurogenic Shock",
+b: ⁠• <b>Immobilization:</b> Rigid cervical collar + thoracolumbar log-roll precautions; document ASIA sensory/motor level.<br> • <b>Hemodynamic Perfusion (Critical):</b> Maintain <b>MAP 85–90 mmHg for 7 days</b> to perfuse the ischemic penumbra of the spinal cord.<br> • <b>Neurogenic Shock (Hypotension + Bradycardia from loss of sympathetic tone above T6):</b><br> &nbsp;&nbsp;– First-line: Isotonic crystalloid resuscitation (avoid fluid overload), then start <b>Norepinephrine</b>.<br> &nbsp;&nbsp;– Give <b>Atropine 0.5–1 mg IV</b> for symptomatic bradycardia.⁠
+},
+{
+id: "p6", cat: "surg", badge: "Trauma Surgery", badgeColor: "bg-rose-500/20 text-rose-300",
+t: "🔪 6. ATLS Primary Survey, Hemorrhagic Shock & Massive Transfusion (MTP)",
+b: ⁠• <b>Primary Survey (cABCDE):</b> Exsanguinating external hemorrhage control -> Airway with C-spine protection -> Breathing -> Circulation + FAST scan -> Disability -> Exposure.<br> • <b>Hemorrhagic Shock Resuscitation:</b><br> &nbsp;&nbsp;– 2 large-bore IVs (14–16G), limit crystalloids to 1L warmed Ringer's Lactate.<br> &nbsp;&nbsp;– <b>Balanced Massive Transfusion Protocol (1:1:1 Ratio):</b> PRBCs : FFP : Platelets.<br> &nbsp;&nbsp;– Give <b>Tranexamic Acid (TXA) 1 g IV</b> over 10 min (within 3h of injury).<br> &nbsp;&nbsp;– Correct Lethal Triad: Hypothermia, Acidosis, Coagulopathy (give <b>Calcium Gluconate 10% 10–20 mL IV</b> after every 4 units of PRBCs).⁠
+},
+{
+id: "p7", cat: "surg", badge: "General Surgery", badgeColor: "bg-emerald-500/20 text-emerald-300",
+t: "🔪 7. Acute Abdomen, Perforated Viscus & Biliary Sepsis (Charcot/Reynolds)",
+b: ⁠• <b>Initial Resuscitation:</b> NPO, IV isotonic crystalloids (Ringer's Lactate), NG tube decompression, Foley catheter.<br> • <b>Labs & Imaging:</b> CBC, amylase/lipase, LFTs, lactate, erect chest X-ray (free subdiaphragmatic air in perforation), contrast CT.<br> • <b>Empiric Surgical Antibiotics:</b> <b>Piperacillin-Tazobactam 4.5 g IV q6h</b> OR <b>Ceftriaxone 2 g q24h + Metronidazole 500 mg IV q8h</b>.<br> • <b>Acute Ascending Cholangitis:</b> Charcot's triad / Reynolds' pentad -> IV resuscitation, broad-spectrum ABX, and <b>urgent biliary decompression (ERCP / PTC)</b>.⁠
+},
+{
+id: "p8", cat: "surg", badge: "GI Surgery / Med", badgeColor: "bg-rose-500/20 text-rose-300",
+t: "🩸 8. Acute Upper & Lower GI Bleeding (Non-Variceal vs Variceal)",
+b: ⁠• <b>Resuscitation:</b> 2 large-bore IVs, crossmatch blood, transfuse PRBCs at Hgb &lt; 7 g/dL.<br> • <b>Non-Variceal UGIB (Peptic Ulcer):</b> <b>Pantoprazole / Omeprazole 80 mg IV bolus</b>, followed by <b>8 mg/hr IV infusion</b> for 72h + Urgent Upper Endoscopy within 24h.<br> • <b>Suspected Variceal Bleeding (Cirrhosis / Portal HTN):</b><br> &nbsp;&nbsp;– <b>Octreotide:</b> 50 mcg IV bolus, then 50 mcg/hr IV infusion.<br> &nbsp;&nbsp;– <b>Antibiotic Prophylaxis:</b> <b>Ceftriaxone 1 g IV q24h</b> for up to 7 days.<br> &nbsp;&nbsp;– Emergent endoscopic variceal band ligation within 12 hours.⁠
+},
+{
+id: "p9", cat: "surg", badge: "HPB Surgery", badgeColor: "bg-amber-500/20 text-amber-300",
+t: "🔥 9. Acute Pancreatitis Management Protocol",
+b: ⁠• <b>Diagnosis (≥2 of 3):</b> Epigastric pain radiating to back, Amylase/Lipase &gt; 3× upper limit of normal, imaging.<br> • <b>Fluid Resuscitation:</b> Goal-directed moderate-aggressive hydration with <b>Lactated Ringer's</b>: 10 mL/kg bolus if hypovolemic, then <b>1.5–3 mL/kg/hr</b>.<br> • <b>Analgesia & Nutrition:</b> IV opioids + antiemetics. Start early enteral feeding within 24–48h.<br> • <b>Antibiotics:</b> Do NOT give prophylactic ABX in sterile necrotizing pancreatitis; reserve Carbapenems for confirmed infected necrosis.⁠
+},
+{
+id: "p10", cat: "surg", badge: "Thoracic / Trauma", badgeColor: "bg-sky-500/20 text-sky-300",
+t: "🫁 10. Tension Pneumothorax, Hemothorax & Chest Tube Indications",
+b: ⁠• <b>Tension Pneumothorax:</b> Clinical diagnosis -> <b>Immediate Needle Decompression</b> followed by <b>Tube Thoracostomy (28–32 Fr)</b> in 5th ICS anterior to mid-axillary line.<br> • <b>Massive Hemothorax (Indications for Thoracotomy):</b><br> &nbsp;&nbsp;– Initial output of <b>≥ 1500 mL of blood</b> upon insertion, OR<br> &nbsp;&nbsp;– Ongoing output of <b>≥ 200 mL/hr for 2–4 consecutive hours</b>.⁠
+},
+{
+id: "p11", cat: "med", badge: "Endocrine ER", badgeColor: "bg-emerald-500/20 text-emerald-300",
+t: "🏥 11. Diabetic Ketoacidosis (DKA) & HHS Protocol",
+b: ⁠• <b>1. IV Fluids:</b> Give <b>0.9% Normal Saline 1000–1500 mL IV</b> over 1st hour, then 250–500 mL/hr.<br> • <b>2. Potassium Replacement:</b><br> &nbsp;&nbsp;– If <b>K+ &lt; 3.3 mEq/L:</b> HOLD insulin! Give 20–40 mEq/hr KCl IV.<br> &nbsp;&nbsp;– If <b>K+ 3.3 – 5.2 mEq/L:</b> Add 20–30 mEq KCl per liter.<br> • <b>3. Regular Insulin Infusion:</b> <b>0.1 units/kg/hr IV</b>. Continue until Anion Gap closes (&lt;12) and pH &gt; 7.3.⁠
+},
+{
+id: "p12", cat: "med", badge: "Cardiology ER", badgeColor: "bg-rose-500/20 text-rose-300",
+t: "❤️ 12. Acute Coronary Syndrome (STEMI/NSTEMI) & Acute Pulmonary Edema",
+b: ⁠• <b>ACS / STEMI Loading:</b> <b>Aspirin 300 mg chewed + Ticagrelor 180 mg PO</b> + Heparin + Primary PCI within 90 min.<br> • <b>Acute Cardiogenic Pulmonary Edema (LMNOP):</b><br> &nbsp;&nbsp;– Upright posture, Non-Invasive Ventilation (CPAP/BiPAP).<br> &nbsp;&nbsp;– <b>Furosemide (Lasix):</b> 40–80 mg IV bolus.<br> &nbsp;&nbsp;– <b>Nitroglycerin:</b> 0.4 mg SL q5min or high-dose IV infusion.⁠
+},
+{
+id: "p13", cat: "med", badge: "Nephrology / Electrolyte ER", badgeColor: "bg-teal-500/20 text-teal-300",
+t: "🧪 13. Severe Hyperkalemia & Neuro Electrolyte Emergencies (SIADH vs CSW)",
+b: ⁠• <b>Acute Hyperkalemia (K+ ≥ 6.0):</b><br> &nbsp;&nbsp;1. <i>Stabilize:</i> <b>Calcium Gluconate 10% (10 mL IV)</b> over 5–10 min.<br> &nbsp;&nbsp;2. <i>Shift:</i> <b>10U Regular Insulin + 50mL D50W</b> + Nebulized Salbutamol.<br> &nbsp;&nbsp;3. <i>Eliminate:</i> Furosemide or Hemodialysis.<br> • <b>SIADH vs Cerebral Salt Wasting (CSW):</b><br> &nbsp;&nbsp;– <b>SIADH:</b> Fluid Restriction (&lt;1L/day).<br> &nbsp;&nbsp;– <b>CSW (Common in SAH):</b> Vigorous 0.9% or 3% NaCl volume & salt replacement.<br> • <b>Central Diabetes Insipidus (DI):</b> Free water + <b>Desmopressin (DDAVP) 1–2 mcg IV/SC</b>.⁠
+},
+{
+id: "p14", cat: "med", badge: "Resuscitation / Airway", badgeColor: "bg-purple-500/20 text-purple-300",
+t: "💤 14. Rapid Sequence Intubation (RSI) & Anaphylaxis Protocol",
+b: ⁠• <b>7 Ps of RSI:</b> Preparation -> Preoxygenation -> Pretreatment (Fentanyl) -> Induction (<b>Etomidate 0.3 mg/kg</b> or <b>Ketamine 1.5–2 mg/kg</b>) -> Paralysis (<b>Rocuronium 1–1.2 mg/kg</b>).<br> • <b>Anaphylactic Shock:</b><br> &nbsp;&nbsp;– <b>IM Epinephrine (1:1000):</b> <b>0.5 mg IM</b> into mid-anterolateral thigh immediately.<br> &nbsp;&nbsp;– 1–2 L Normal Saline IV bolus, Hydrocortisone 200 mg IV, Diphenhydramine 50 mg IV.⁠
+},
+{
+id: "p15", cat: "med", badge: "Pulmonary / Vascular", badgeColor: "bg-sky-500/20 text-sky-300",
+t: "🫁 15. Acute Pulmonary Embolism (PE) & DVT Anticoagulation",
+b: ⁠• <b>Stable PE / DVT:</b> <b>Enoxaparin 1 mg/kg SC q12h</b> (or UFH IV: 80 U/kg bolus, then 18 U/kg/hr).<br> • <b>Massive PE with Shock / Hypotension (SBP &lt; 90):</b> Systemic Thrombolysis: <b>Alteplase 100 mg IV over 2 hours</b> (or 50 mg bolus in cardiac arrest).⁠
+}
+];
+function init() {
+document.getElementById('catBar').innerHTML = cats.map(c=>⁠<button onclick="setCat('${c[0]}')" class="px-3.5 py-1.5 rounded-xl shrink-0 transition ${c[0]===curCat?'bg-sky-500 text-slate-950 font-extrabold':'bg-slate-800 text-slate-300 hover:bg-slate-700'}">${c[1]}</button>⁠).join('');
+document.getElementById('abxCatBar').innerHTML = abxCats.map(c=>⁠<button onclick="setAbxCat('${c[0]}')" class="px-3.5 py-1.5 rounded-xl shrink-0 transition ${c[0]===curAbxCat?'bg-emerald-500 text-slate-950 font-extrabold':'bg-slate-800 text-slate-300 hover:bg-slate-700'}">${c[1]}</button>⁠).join('');
+document.getElementById('protoCatBar').innerHTML = protoCats.map(c=>⁠<button onclick="setProtoCat('${c[0]}')" class="px-3.5 py-1.5 rounded-xl shrink-0 transition ${c[0]===curProtoCat?'bg-sky-500 text-slate-950 font-extrabold':'bg-slate-800 text-slate-300 hover:bg-slate-700'}">${c[1]}</button>⁠).join('');
+calcCrCl(); renderDrugs(); renderProtos(); calcPump(); calcBurn();
+}
+function toggleAcc(id) {
+if (openSet.has(id)) openSet.delete(id);
+else openSet.add(id);
+renderDrugs(); renderAbx(); renderProtos();
+}
+function toggleGroup(group) {
+let ids = [];
+if (group === 'drug') ids = drugs.map(d => d.id);
+if (group === 'abx') ids = [...abxProtocols.map(p => p.id), ...renalDrugs.map(r => r.id)];
+if (group === 'proto') ids = protos.map(p => p.id);
+const anyOpen = ids.some(id => openSet.has(id));
+ids.forEach(id => {
+if (anyOpen) openSet.delete(id);
+else openSet.add(id);
+});
+renderDrugs(); renderAbx(); renderProtos();
+}
+function setW(v) {
+W = Math.max(2, Math.min(200, parseFloat(v)||70));
+['wInpMob','wInpSide'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = W; });
+['wRngMob','wRngSide'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = Math.min(W,150); });
+document.getElementById('hdrW').innerText = W+' kg';
+document.getElementById('sideWBadge').innerText = W+' kg';
+document.getElementById('pNote').innerText = 'Calculated for Weight: '+W+' kg';
+calcCrCl(); renderDrugs(); calcPump(); calcBurn();
+}
+function calcCrCl() {
+const age = Math.max(1, parseFloat(document.getElementById('rAge').value) || 50);
+const scr = Math.max(0.2, parseFloat(document.getElementById('rScr').value) || 1.0);
+const sex = parseFloat(document.getElementById('rSex').value) || 1.0;
+CrCl = Math.max(1, Math.round(((140 - age) * W * sex) / (72 * scr)));
+const resEl = document.getElementById('crclResult');
+const stgEl = document.getElementById('crclStage');
+resEl.innerText = ⁠${CrCl} mL/min⁠;
+document.getElementById('hdrCrCl').innerText = ⁠${CrCl}⁠;
+document.getElementById('sideCrClBadge').innerText = ⁠${CrCl} mL/min⁠;
+if (CrCl > 50) {
+resEl.className = "text-lg font-extrabold text-emerald-400";
+stgEl.innerText = "Normal Renal Function (>50)";
+stgEl.className = "text-[10px] text-emerald-300 block font-bold";
+} else if (CrCl >= 20) {
+resEl.className = "text-lg font-extrabold text-amber-400";
+stgEl.innerText = "Moderate Impairment (Adjust Doses 20–50)";
+stgEl.className = "text-[10px] text-amber-300 block font-bold";
+} else {
+resEl.className = "text-lg font-extrabold text-rose-400";
+stgEl.innerText = "Severe Renal Failure (<20)";
+stgEl.className = "text-[10px] text-rose-300 block font-bold";
+}
+renderAbx();
+}
+function setCat(c) { curCat = c; init(); }
+function setAbxCat(c) { curAbxCat = c; init(); }
+function setProtoCat(c) { curProtoCat = c; init(); }
+function renderDrugs() {
+const q = (document.getElementById('dSearch').value||'').toLowerCase().trim();
+const list = drugs.filter(d => (curCat==='all'||d.c===curCat) && (!q || d.n.toLowerCase().includes(q) || d.t.toLowerCase().includes(q) || d.i.toLowerCase().includes(q)));
+document.getElementById('drugsList').innerHTML = list.map(d => {
+const isOpen = openSet.has(d.id) || q.length > 1;
+return ⁠ <div class="card overflow-hidden transition border ${isOpen ? 'border-sky-500/50' : 'border-slate-700/80 hover:border-slate-600'}"> <button onclick="toggleAcc('${d.id}')" class="w-full p-3.5 text-left flex justify-between items-center gap-2 bg-slate-800/50 hover:bg-slate-800 transition"> <div class="min-w-0"> <b class="text-xs md:text-sm text-white block truncate">${d.n}</b> <span class="text-[10px] text-sky-400 font-semibold">${d.t}</span> </div> <span class="w-7 h-7 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center text-sky-400 text-xs font-bold shrink-0"> ${isOpen ? '▲' : '▼'} </span> </button> <div class="${isOpen ? 'block' : 'hidden'} p-3.5 border-t border-slate-800 bg-slate-900/70 space-y-2"> <div class="text-xs bg-slate-950/90 p-2.5 rounded-xl border border-slate-800 leading-relaxed text-slate-200">${d.f(W)}</div> <p class="text-[11px] text-amber-200/90 bg-amber-500/10 border border-amber-500/20 p-2 rounded-lg">💡 <b>Clinical Pearl:</b> ${d.i}</p> </div> </div>⁠;
+}).join('');
+}
+function renderAbx() {
+const q = (document.getElementById('abxSearch').value||'').toLowerCase().trim();
+const renalSec = document.getElementById('renalSection');
+const empSec = document.getElementById('empiricSection');
+if (curAbxCat === 'renal') {
+renalSec.classList.remove('hidden'); empSec.classList.add('hidden');
+} else if (curAbxCat === 'all') {
+renalSec.classList.remove('hidden'); empSec.classList.remove('hidden');
+} else {
+renalSec.classList.add('hidden'); empSec.classList.remove('hidden');
+}
+const list = abxProtocols.filter(p => (curAbxCat==='all' || curAbxCat==='renal' || p.cat===curAbxCat) && (!q || p.title.toLowerCase().includes(q) || p.pathogens.toLowerCase().includes(q)));
+document.getElementById('abxList').innerHTML = list.map(p => {
+const isOpen = openSet.has(p.id) || q.length > 1;
+return ⁠ <div class="card overflow-hidden border ${isOpen ? 'border-emerald-500/50' : 'border-slate-700/80'}"> <button onclick="toggleAcc('${p.id}')" class="w-full p-3.5 text-left flex justify-between items-center gap-2 bg-slate-800/50 hover:bg-slate-800 transition"> <div class="space-y-1"> <span class="text-[10px] ${p.badgeColor} px-2 py-0.5 rounded-full font-bold inline-block">${p.badge}</span> <h3 class="font-extrabold text-xs md:text-sm text-white leading-snug">${p.title}</h3> </div> <span class="w-7 h-7 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center text-emerald-400 text-xs font-bold shrink-0"> ${isOpen ? '▲' : '▼'} </span> </button> <div class="${isOpen ? 'block' : 'hidden'} p-3.5 border-t border-slate-800 bg-slate-900/70 space-y-2.5"> <div class="text-[11px] bg-slate-950/60 px-2.5 py-1.5 rounded-lg border border-slate-800 text-slate-300"> <b class="text-amber-400">🦠 Likely Pathogens:</b> ${p.pathogens} </div> <div class="text-xs bg-slate-950 p-3 rounded-xl border border-emerald-500/30 space-y-1 leading-relaxed"> <div class="text-[11px] font-extrabold text-emerald-400 mb-1">✅ First-Line Empiric Regimen (Adult IV):</div> <div class="text-slate-100">${p.firstLine(W)}</div> </div> <div class="text-xs bg-slate-950/80 p-2.5 rounded-xl border border-slate-800 space-y-1 leading-relaxed"> <div class="text-[11px] font-bold text-rose-300">⚠️ Severe Beta-Lactam Allergy / Alternative:</div> <div class="text-slate-200">${p.allergy(W)}</div> </div> <div class="text-[11px] text-amber-200/90 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl leading-relaxed"> 💡 <b>Key Clinical Pearl:</b> ${p.pearls(W)} </div> </div> </div>⁠;
+}).join('');
+const rFiltered = renalDrugs.filter(d => !q || d.name.toLowerCase().includes(q) || d.ind.toLowerCase().includes(q));
+document.getElementById('renalGrid').innerHTML = rFiltered.map(d => {
+const isOpen = openSet.has(d.id) || q.length > 1;
+const activeTier = d.tiers.find(t => t.match(CrCl));
+const activeDoseTxt = activeTier ? (typeof activeTier.dose === 'function' ? activeTier.dose(W) : activeTier.dose) : '';
+return ⁠<div class="card overflow-hidden border ${isOpen ? 'border-sky-500/50' : 'border-slate-700'}"> <button onclick="toggleAcc('${d.id}')" class="w-full p-3.5 text-left flex justify-between items-center gap-2 bg-slate-800/50 hover:bg-slate-800 transition"> <div class="min-w-0"> <b class="text-xs md:text-sm text-white block truncate">${d.name}</b> <span class="text-[10.5px] text-emerald-400 font-bold block mt-0.5">Active (${CrCl} mL/min): ${activeDoseTxt}</span> </div> <span class="w-7 h-7 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center text-sky-400 text-xs font-bold shrink-0"> ${isOpen ? '▲' : '▼'} </span> </button> <div class="${isOpen ? 'block' : 'hidden'} p-3.5 border-t border-slate-800 bg-slate-900/70 space-y-1.5 text-xs"> <p class="text-[10.5px] text-slate-400 mb-1">${d.ind}</p> ${d.tiers.map(t => { const active = t.match(CrCl); const doseTxt = typeof t.dose === 'function' ? t.dose(W) : t.dose; return⁠
+<div class="p-2 rounded-xl border border-slate-800 bg-slate-950/80 flex justify-between items-center gap-2 ${active ? 'renal-active' : 'text-slate-400'}">
+<span class="font-bold shrink-0 text-[11px] ${active ? 'text-emerald-300' : ''}">￼{t.label}:</span>
+<span class="text-right font-semibold text-[11px]">${doseTxt}</span>
+</div>⁠; }).join('')} </div> </div>⁠;
+}).join('');
+}
+function renderProtos() {
+const q = (document.getElementById('pSearch').value||'').toLowerCase().trim();
+const filtered = protos.filter(p => (curProtoCat==='all' || p.cat===curProtoCat) && (!q || p.t.toLowerCase().includes(q) || p.b.toLowerCase().includes(q)));
+document.getElementById('protoList').innerHTML = filtered.map(p => {
+const isOpen = openSet.has(p.id) || q.length > 1;
+return ⁠ <div class="card overflow-hidden border ${isOpen ? 'border-sky-500/50' : 'border-slate-700/80'}"> <button onclick="toggleAcc('${p.id}')" class="w-full p-3.5 text-left flex justify-between items-center gap-2 bg-slate-800/50 hover:bg-slate-800 transition"> <div class="space-y-1"> <span class="text-[10px] ${p.badgeColor} px-2.5 py-0.5 rounded-full font-bold inline-block">${p.badge}</span> <h3 class="font-extrabold text-xs md:text-sm text-white">${p.t}</h3> </div> <span class="w-7 h-7 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center text-sky-400 text-xs font-bold shrink-0"> ${isOpen ? '▲' : '▼'} </span> </button> <div class="${isOpen ? 'block' : 'hidden'} p-3.5 border-t border-slate-800 bg-slate-900/70 text-slate-200 leading-relaxed text-xs"> ${p.b} </div> </div>⁠;
+}).join('');
+}
+function calcGCS() {
+const e=+document.getElementById('gcsE').value, v=+document.getElementById('gcsV').value, m=+document.getElementById('gcsM').value;
+const tot = e+v+m;
+document.getElementById('gcsOut').innerText = ⁠${tot}/15 (E${e} V${v} M${m})⁠;
+const note = document.getElementById('gcsNote');
+if(tot>=13) { note.innerText="Mild Brain Injury (13–15)"; note.className="bg-slate-900 p-2.5 rounded-xl text-center text-emerald-400 font-bold"; }
+else if(tot>=9) { note.innerText="Moderate Brain Injury (9–12)"; note.className="bg-slate-900 p-2.5 rounded-xl text-center text-amber-400 font-bold"; }
+else { note.innerText="Severe Brain Injury / Coma (≤8)"; note.className="bg-slate-900 p-2.5 rounded-xl text-center text-rose-400 font-bold"; }
+}
+function copyGCS() { navigator.clipboard.writeText('GCS ' + document.getElementById('gcsOut').innerText); alert('GCS Copied to Clipboard!'); }
+function calcABC() {
+const v = ((+document.getElementById('abA').value)(+document.getElementById('abB').value)(+document.getElementById('abC').value))/2;
+document.getElementById('abcOut').innerText = ⁠Volume: ${v.toFixed(1)} mL (cm³) ${v>=30?'⚠️ Critical (≥30mL)':''}⁠;
+}
+function calcICH() {
+const s = (+document.getElementById('icG').value)+(+document.getElementById('icV').value)+(+document.getElementById('icI').value)+(+document.getElementById('icF').value)+(+document.getElementById('icA').value);
+const m = ['0%','13%','26%','72%','97%','100%','100%'][s];
+document.getElementById('ichOut').innerText = ⁠ICH Score: ${s}/6 (30-Day Mortality: ${m})⁠;
+}
+function calcBurn() {
+const tbsa = Math.max(1, Math.min(100, parseFloat(document.getElementById('burnTbsa').value)||20));
+const total = Math.round(4 * W * tbsa);
+const half = Math.round(total / 2);
+document.getElementById('burnOut').innerHTML = ⁠<div class="text-sm font-extrabold text-white">Total 24h: ${total} mL LR</div> <div class="text-xs text-sky-400 font-bold">1st 8h: ${half} mL (${Math.round(half/8)} mL/hr)</div> <div class="text-[11px] text-slate-400">Next 16h: ${half} mL (${Math.round(half/16)} mL/hr)</div>⁠;
+}
+function setPump() {
+const p = document.getElementById('pPre').value.split(',');
+document.getElementById('pMg').value=p[0]; document.getElementById('pMl').value=p[1]; document.getElementById('pDs').value=p[2]; pMode=+p[3]; calcPump();
+}
+function calcPump() {
+const mg=+document.getElementById('pMg').value||1, ml=+document.getElementById('pMl').value||1, ds=+document.getElementById('pDs').value||0;
+const rate = pMode=1 ? (dsW60)/((mg*1000)/ml) : (pMode=2 ? (dsW)/(mg/ml) : (dsW)/((mg*1000)/ml));
+document.getElementById('pOut').innerText = ⁠${rate.toFixed(1)} mL/hr⁠;
+}
+function tab(t) {
+const sections = ['dosing','abx','protocols','scales','pump'];
+if (t === 'all') {
+sections.forEach(x => document.getElementById('tab-'+x).classList.remove('hidden'));
+} else {
+sections.forEach(x => document.getElementById('tab-'+x).classList.add('hidden'));
+document.getElementById('tab-'+t).classList.remove('hidden');
+}
+sections.forEach(x => {
+const mobBtn = document.getElementById('n-'+x);
+if(mobBtn) mobBtn.className = (x=t) ? "py-2 flex flex-col items-center active-mob" : "py-2 flex flex-col items-center text-slate-400";
+});
+[...sections, 'all'].forEach(x => {
+const sideBtn = document.getElementById('s-'+x);
+if(sideBtn) sideBtn.className = (x=t)
+? "w-full p-3 rounded-xl border flex items-center gap-3 text-left transition active-side"
+: "w-full p-3 rounded-xl border border-slate-800 flex items-center gap-3 text-left text-slate-300 hover:bg-slate-800 transition";
+});
+}
+init();
+</script>
+</body>
+</html>
